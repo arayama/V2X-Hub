@@ -17,7 +17,7 @@
 #include <BsmConverter.h>
 #include <LocationMessage.h>
 
-#define ABBR_BSM 1000
+#define ABBR_BSM 20 // should be 20 
 #define ABBR_SRM 2000
 
 using namespace std;
@@ -181,20 +181,127 @@ void MessageReceiverPlugin::OnMessageReceived(routeable_message &msg)
 			try
 			{
 				// Check for an abbreviated message
-				const byte_stream &bytes = msg.get_payload_bytes();
-				if (bytes.size() > 8)
+			    byte_stream bytesFull = msg.get_payload_bytes();
+				byte_stream bytes; 
+				if (bytesfull.size() > 8)
 				{
-					PLOG(logDEBUG) << "Looking for abbreviated message in bytes " << bytes;
+					PLOG(logDEBUG1) << "Looking for abbreviated message in bytes " << bytesFull;
+					uint16_t msgType;
+					uint8_t msgVersion;
+					uint16_t id;
+					uint16_t dataLength;
+					uint32_t vehID, heaDing, spEed, laTi, loNg, eleVate; // stores for data 
 
-					//message format, length in bytes
-					//  type(2), version(2), sourceId(2), dataLength(2), data
-					//header length is always size 8
-					uint16_t msgType = ntohs(*((uint16_t*)bytes.data()));
-					uint16_t msgVersion = ntohs(*((uint16_t*)&(bytes.data()[2])));
-					uint16_t id = ntohs(*((uint16_t*)&(bytes.data()[4])));
-					uint16_t dataLength = ntohs(*((uint16_t*)&(bytes.data()[6])));
+					std::vector<unsigned char>::iterator cnt = bytesFull.begin();
 
-					PLOG(logDEBUG1) << "Got message,  msgType: " << msgType
+					while(cnt != bytesFull.end())
+					{
+						if(*cnt == 0x00 && (*(cnt+1) == 0x14 || *(cnt+1) == 0x12 || *(cnt+1) == 0x13))
+						{
+							break;
+						}
+						cnt++;
+					}
+
+					while(cnt != bytesFull.end())
+					{	
+						bytes.push_back(*cnt);
+						cnt++;
+
+					}
+
+					// if(bytes.size() == bytesFull.size()) // original short version of payload 
+					// {						
+					// 	msgType = ntohs(*((uint16_t*)bytes.data()));
+					// 	msgVersion = ntohs(*((uint16_tuint8_t*)&(bytes.data()[2])));
+					// 	id = ntohs(*((uint16_t*)&(bytes.data()[4])));
+					// 	dataLength = ntohs(*((uint16_t*)&(bytes.data()[6])));
+
+					// 	vehID = ntohl(*((uint32_t*)&(bytes.data()[8]))); 
+					// 	heaDing  = ntohl(*((uint32_t*)&(bytes.data()[12])));
+					// 	spEed = ntohl(*((uint32_t*)&(bytes.data()[16])));
+					// 	laTi = ntohl(*((uint32_t*)&(bytes.data()[20])));
+					// 	loNg = ntohl(*((uint32_t*)&(bytes.data()[24]))); 
+					// 	eleVate = ntohl(*((uint32_t*)&(bytes.data()[28]))); 
+					// }
+					// else{
+					// 	msgType = ntohs(*((uint16_t*)bytes.data()));
+					// 	msgVersion = ntohs(*((uint8_t*)bytesFull.data()));
+					// 	id = ntohs(*((uint16_t*)&(bytes.data()[4])));
+					// 	dataLength = ntohs(*((uint16_t*)&(bytes.data()[6])));
+
+					// 	vehID = ntohl(*((uint32_t*)&(bytes.data()[8]))); 
+					// 	heaDing  = ntohl(*((uint32_t*)&(bytes.data()[12])));
+					// 	spEed = ntohl(*((uint32_t*)&(bytes.data()[16])));
+					// 	laTi = ntohl(*((uint32_t*)&(bytes.data()[20])));
+					// 	loNg = ntohl(*((uint32_t*)&(bytes.data()[24]))); 
+					// 	eleVate = ntohl(*((uint32_t*)&(bytes.data()[28]))); 
+
+
+
+					// }
+
+						
+
+					// bytes is  unint8_t vector 
+
+					//if(bytes.data()[0] == 0x00)		
+					//{
+
+
+					msgType = ntohs(*((uint16_t*)bytes.data()));
+					msgVersion = ntohs(*((uint16_t*)&(bytes.data()[2])));
+					id = ntohs(*((uint16_t*)&(bytes.data()[4])));
+					dataLength = ntohs(*((uint16_t*)&(bytes.data()[6])));
+
+					// msgType = ntohs((uint16_t) bytes[4]);
+					// msgVersion = ntohs(bytes[4+2]);
+					// id = ntohs(bytes[4+4]);
+					// dataLength = ntohs(bytes[6+4]);
+
+					//}
+					// if(bytes.data()[1]==128) 
+					// {
+
+					// 	//uint8_t bt1 = ntohs(*((uint8_t*)bytes.data()[1]));
+					// 	//uint8_t bt2 = ntohs(*((uint8_t*)bytes.data()[2]));
+					// 	uint8_t bt1 = (uint8_t) bytes.data()[1]; 
+					// 	uint8_t bt2 = (uint8_t) bytes.data()[2];
+					// 	if(bytes.data()[1] < 128)
+					// 	{
+					// 		msgType = ntohs(*((uint16_t*)bytes.data()[2]));
+					// 		msgVersion = ntohs(*((uint16_t*)&(bytes.data()[2+2])));
+					// 		id = ntohs(*((uint16_t*)&(bytes.data()[4+2])));
+					// 		dataLength = ntohs(*((uint16_t*)&(bytes.data()[6+2])));
+					// 	}
+					// 	if(bytes.data()[1] ==128 && bytes.data()[2] <128)
+					// 	{
+					// 		msgType = ntohs(*((uint16_t*)bytes.data()[3]));
+					// 		msgVersion = ntohs(*((uint16_t*)&(bytes.data()[2+3])));
+					// 		id = ntohs(*((uint16_t*)&(bytes.data()[4+3])));
+					// 		dataLength = ntohs(*((uint16_t*)&(bytes.data()[6+3])));
+					// 	}
+					// 	if(bytes.data()[1] ==128 && bytes.data()[2] ==129)
+					// 	{
+							
+					// 		msgType = ntohs(*((uint16_t*)bytes.data()[4]));
+					// 		msgVersion = ntohs(*((uint16_t*)&(bytes.data()[2+4])));
+					// 		id = ntohs(*((uint16_t*)&(bytes.data()[4+4])));
+					// 		dataLength = ntohs(*((uint16_t*)&(bytes.data()[6+4])));
+					// 	}
+					// 	if(bytes.data()[1] ==128 && bytes.data()[2] ==130)
+					// 	{
+					// 		msgType = ntohs(*((uint16_t*)bytes.data()[5]));
+					// 		msgVersion = ntohs(*((uint16_t*)&(bytes.data()[2+5])));
+					// 		id = ntohs(*((uint16_t*)&(bytes.data()[4+5])));
+					// 		dataLength = ntohs(*((uint16_t*)&(bytes.data()[6+5])));
+					// 	}
+					// }
+					
+
+
+				
+					PLOG(logDEBUG4) << "Got message,  msgType: " << msgType
 							<< ", msgVersion: " << msgVersion
 							<< ", id: " << id
 							<< ", dataLength: " << dataLength;
@@ -203,7 +310,7 @@ void MessageReceiverPlugin::OnMessageReceived(routeable_message &msg)
 					{
 						switch (msgType)
 						{
-						case ABBR_BSM:
+							case ABBR_BSM:
 							if (bytes.size() >= 32 && dataLength >= 24)
 							{
 								if (!simBSM && !simLoc) return;
@@ -220,7 +327,7 @@ void MessageReceiverPlugin::OnMessageReceived(routeable_message &msg)
 
 								if (simLoc) {
 									LocationMessage loc(::to_string(decodedBsm.get_TemporaryId()),
-													    location::SignalQualityTypes::SimulationMode,
+														location::SignalQualityTypes::SimulationMode,
 														"", ::to_string(msg.get_timestamp()),
 														decodedBsm.get_Latitude(), decodedBsm.get_Longitude(),
 														location::FixTypes::ThreeD, 0, 0.0,
@@ -256,12 +363,13 @@ void MessageReceiverPlugin::OnMessageReceived(routeable_message &msg)
 							break;
 						default:
 							{
-								PLOG(logDEBUG) << "Unknown byte format.  Dropping message";
+								PLOG(logDEBUG4) << "Unknown byte format.  Dropping message";
 							}
 							return;
 						}
 					}
 				}
+				
 			}
 			catch (exception &ex)
 			{
